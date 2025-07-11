@@ -1,0 +1,10 @@
+/* ...existing styles... */
+
+/* Add or modify these styles to ensure the popup has enough height for the transaction feed */
+.popup-container {
+  /* Increase max-height if needed */
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+/* ...existing styles... */

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <h1>Icon Generator</h1>
+  <canvas id="canvas" width="128" height="128" style="border:1px solid #000;"></canvas>
+  <p id="info"></p>
+  <script>
+    function downloadIcon(size) {
+      const canvas = document.getElementById('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      
+      // Draw a blue square
+      ctx.fillStyle = '#4285f4';
+      ctx.fillRect(0, 0, size, size);
+      
+      // Add some text for size reference
+      ctx.fillStyle = 'white';
+      ctx.font = `${size/4}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(size + 'px', size/2, size/2);
+      
+      // Create download link
+      const link = document.createElement('a');
+      link.download = `icon${size}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.textContent = `Download ${size}x${size} icon`;
+      link.style.display = 'block';
+      link.style.margin = '10px';
+      document.body.appendChild(link);
+      
+      document.getElementById('info').textContent = 'Right-click on the links above and save them to your icons folder';
+    }
+    
+    // Generate icons for different sizes
+    downloadIcon(16);
+    downloadIcon(48);
+    downloadIcon(128);
+  </script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+.rccs {
+  width: 100%;
+}
+
+.rccs__card {
+  background: linear-gradient(45deg, #9945FF, #8039EB);
+  border-radius: 14px;
+  color: #fff;
+  height: 182px;
+  margin: 0 auto;
+  overflow: hidden;
+  position: relative;
+  width: 290px;
+}
+
+.rccs__card--front {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 15px;
+}
+
+.rccs__number {
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 2px;
+}
+
+.rccs__name {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.rccs__expiry {
+  font-size: 12px;
+}
+
+.rccs__chip {
+  background: linear-gradient(to bottom, #ffb952, #f5a742);
+  border-radius: 6px;
+  height: 30px;
+  margin-bottom: 15px;
+  width: 45px;
+}
