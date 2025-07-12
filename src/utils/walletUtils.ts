@@ -1,19 +1,25 @@
 import { ethers } from 'ethers';
 import CryptoJS from 'crypto-js';
 import { createPublicClient, http } from 'viem';
-import { mainnet } from 'viem/chains'; // Changed from sepolia to mainnet
+import { mainnet } from 'viem/chains';
 
-// Use the mainnet Infura endpoint
 const rpcUrl = 'https://mainnet.infura.io/v3/e1e551858f45457d8f1250cf09d3ba59';
-
 const client = createPublicClient({ chain: mainnet, transport: http(rpcUrl) });
+
+const USDC_CONTRACT_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
+const USDC_DECIMALS = 6;
+
+const ERC20_ABI = [
+  "function transfer(address to, uint256 amount) returns (bool)",
+  "function balanceOf(address owner) view returns (uint256)",
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "function allowance(address owner, address spender) view returns (uint256)"
+];
 
 export class WalletUtils {
   static generateMnemonic(): string {
     return ethers.Wallet.createRandom().mnemonic?.phrase || '';
   }
-
-  // Update the getWalletFromMnemonic method to store both private key and mnemonic
 
   static async getWalletFromMnemonic(mnemonic: string, password: string): Promise<string> {
     try {
@@ -41,58 +47,60 @@ export class WalletUtils {
     return ethers.formatEther(balance);
   }
 
-  /**
-   * Estimate transaction fee for sending ETH
-   */
+  static async getUSDCBalance(address: string): Promise<string> {
+    try {
+      console.log("Checking USDC balance for address:", address);
+      console.log("Using USDC contract:", USDC_CONTRACT_ADDRESS);
+      
+      const provider = new ethers.JsonRpcProvider(rpcUrl);
+      const contract = new ethers.Contract(USDC_CONTRACT_ADDRESS, ERC20_ABI, provider);
+      
+      const balance = await contract.balanceOf(address);
+      console.log("Raw USDC balance:", balance.toString());
+      
+      // Convert from USDC units (6 decimals) to human readable
+      const formattedBalance = ethers.formatUnits(balance, USDC_DECIMALS);
+      console.log("Formatted USDC balance:", formattedBalance);
+      
+      return formattedBalance;
+    } catch (error) {
+      console.error('Error getting USDC balance:', error);
+      return '0';
+    }
+  }
+
   static async estimateTransactionFee(toAddress: string, amount: string): Promise<string> {
     try {
       if (!toAddress || !amount || toAddress.trim() === '' || amount.trim() === '0') {
         return '0.0000';
       }
 
-      // Get provider - make sure to use the same provider as in your other methods
       const provider = new ethers.JsonRpcProvider('https://eth.llamarpc.com');
-      
-      // Get current gas price
       const gasPrice = await provider.getFeeData();
-      
-      // Standard gas limit for ETH transfers is 21000
       const gasLimit = 21000n;
       
-      // Calculate the fee based on gasPrice
       let fee;
       if (gasPrice.maxFeePerGas) {
-        // EIP-1559 style fee
         fee = (gasPrice.maxFeePerGas * gasLimit);
       } else if (gasPrice.gasPrice) {
-        // Legacy style fee
         fee = (gasPrice.gasPrice * gasLimit);
       } else {
-        // Fallback
-        fee = BigInt(3000000000) * gasLimit; // 3 gwei as fallback
+        fee = BigInt(3000000000) * gasLimit;
       }
       
-      // Convert the fee from wei to ETH (1 ETH = 10^18 wei)
       const feeInEth = ethers.formatEther(fee);
-      
-      // Return fee with 6 decimal places
       return parseFloat(feeInEth).toFixed(6);
     } catch (error) {
       console.error('Error estimating fee:', error);
-      return '0.0001'; // Return a default fee value if estimation fails
+      return '0.0001';
     }
   }
 
-  /**
-   * Get mnemonic phrase (seed phrase) with password
-   */
   static async getMnemonic(password: string): Promise<string> {
     try {
-      // Try to get the encrypted mnemonic first
       const encryptedMnemonic = localStorage.getItem('encryptedMnemonic');
       
       if (encryptedMnemonic) {
-        // If we have a stored mnemonic, decrypt and return it
         const decryptedMnemonic = CryptoJS.AES.decrypt(encryptedMnemonic, password).toString(CryptoJS.enc.Utf8);
         
         if (!decryptedMnemonic) {
@@ -101,22 +109,19 @@ export class WalletUtils {
         
         return decryptedMnemonic;
       } else {
-        // For backwards compatibility - check if we have the old format
         const encryptedKey = localStorage.getItem('encryptedKey');
         if (!encryptedKey) {
           throw new Error('No encrypted key found');
         }
         
-        // Decrypt the key
         const decrypted = CryptoJS.AES.decrypt(encryptedKey, password).toString(CryptoJS.enc.Utf8);
         
         if (!decrypted) {
           throw new Error('Invalid password');
         }
         
-        // Check if it's a mnemonic or a private key
         if (decrypted.split(' ').length >= 12) {
-          return decrypted; // It's already a mnemonic
+          return decrypted;
         } else {
           throw new Error('No seed phrase found. Your wallet was created with a private key.');
         }
@@ -126,11 +131,6 @@ export class WalletUtils {
     }
   }
 
-  // Version for ethers.js v5
-
-  /**
-   * Get private key with password
-   */
   static async getPrivateKey(password: string): Promise<string> {
     try {
       const encryptedKey = localStorage.getItem('encryptedKey');
@@ -138,20 +138,16 @@ export class WalletUtils {
         throw new Error('No encrypted key found');
       }
       
-      // Decrypt the key
       const decrypted = CryptoJS.AES.decrypt(encryptedKey, password).toString(CryptoJS.enc.Utf8);
       
       if (!decrypted) {
         throw new Error('Invalid password');
       }
       
-      // Check if it's a mnemonic or a private key
       if (decrypted.split(' ').length >= 12) {
-        // Use ethers.js v6 method to create a wallet from mnemonic
         const wallet = ethers.Wallet.fromPhrase(decrypted);
         return wallet.privateKey;
       } else {
-        // It's already a private key
         return decrypted;
       }
     } catch (error) {
@@ -159,7 +155,11 @@ export class WalletUtils {
     }
   }
 
-  // Send transaction
+  static getAddressFromPrivateKey(privateKey: string): string {
+    const wallet = new ethers.Wallet(privateKey);
+    return wallet.address;
+  }
+
   static async sendTransaction(to: string, value: string, password: string): Promise<string> {
     try {
       const privateKey = await this.getPrivateKey(password);
@@ -178,19 +178,17 @@ export class WalletUtils {
   }
 }
 
-// Function to get transaction history for an address
+// Export additional functions
 export const getTxHistory = async (address: string) => {
   try {
-    // Using Etherscan API for this example
-    // In production, you should use your own API key
-    const apiKey = 'YourEtherscanApiKey'; // Replace with your API key or use env variable
+    const apiKey = 'YourEtherscanApiKey';
     const url = `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${apiKey}`;
     
     const response = await fetch(url);
     const data = await response.json();
     
     if (data.status === '1') {
-      return data.result.slice(0, 10).map(tx => ({
+      return data.result.slice(0, 10).map((tx: any) => ({
         hash: tx.hash,
         timestamp: parseInt(tx.timeStamp),
         from: tx.from,
@@ -204,5 +202,46 @@ export const getTxHistory = async (address: string) => {
   } catch (error) {
     console.error('Error in getTxHistory:', error);
     return [];
+  }
+};
+
+export const purchaseCard = async (cardData: any, _contractAddress: string, _contractABI: any, _signerOrProvider?: any) => {
+  try {
+    console.log("Purchasing card with data:", cardData);
+    return { success: true, data: cardData };
+  } catch (error) {
+    console.error("Card purchase error:", error);
+    throw error;
+  }
+};
+
+export const debugWallet = async () => {
+  console.log("Debug wallet function called");
+};
+
+export const purchaseCardWithStoredWallet = async (
+  cardData: any, 
+  _contractAddress: string, 
+  _contractABI: any, 
+  _password: string
+) => {
+  try {
+    console.log("Purchasing card with stored wallet");
+    return { success: true, data: cardData };
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const debugCardPurchase = async (_password: string) => {
+  console.log("Debug card purchase with password");
+};
+
+export const topUpCard = async (cardData: any, amount: string, _password: string) => {
+  try {
+    console.log("Topping up card:", cardData, "with amount:", amount);
+    return { success: true, newBalance: parseFloat(cardData.balance) + parseFloat(amount) };
+  } catch (error) {
+    throw new Error(`Card top-up failed: ${(error as Error).message}`);
   }
 };

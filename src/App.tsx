@@ -24,9 +24,7 @@ function App() {
   const [ethValue, setEthValue] = useState('$0.00');
   
   // Card state
-  const [email, setEmail] = useState('');
   const [card, setCard] = useState<any>(null);
-  const [amount, setAmount] = useState(50);
   
   // USDC price state
   const [usdcPrice, setUsdcPrice] = useState(1.0); 
@@ -60,6 +58,18 @@ function App() {
   // Top-up state
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState(25);
+
+  // Add these state variables after the existing useState declarations (around line 30):
+  const [cardFormData, setCardFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    mobile: '',
+    value: 15,
+    password: ''
+  });
+
+  const [isLoading, setIsLoading] = useState(false);
 
   // Check if user already has a wallet and handle intro animation
   useEffect(() => {
@@ -233,23 +243,6 @@ function App() {
     setShowPasswordModal(true);
   };
 
-  const handlePurchaseCard = async () => {
-    if (!email || !amount) {
-      return showNotification('Please enter email and amount', 'error');
-    }
-    
-    if (amount < 10) {
-      return showNotification('Minimum amount is $10', 'error');
-    }
-    
-    // Instead of using browser prompt, use our custom modal
-    setPendingTransaction({
-      to: "CARD_CREATION", // Special value to indicate card creation
-      value: amount.toString()
-    });
-    setShowPasswordModal(true);
-  };
-
   // Update the confirmTransaction function to handle card top-ups
 
   const confirmTransaction = async () => {
@@ -262,16 +255,19 @@ function App() {
       
       // Handle card creation
       if (pendingTransaction.to === "CARD_CREATION") {
-        const apiKeyToUse = "YsIy5RYLDGPhVz2xWBWUlv3wW1pNHnyhgKILG5kulPY=";
-        const apiSecretToUse = "gLjwb4+p4x941sCMzG6sU0GGyacy/upvfUDa6qqjswE=";
+        const apiKeyToUse = "LIVE_API_KEY:50415ff0f56236badcc426fac91d1ad6:71e1937ccddd75338068067c8fe73e42";
+        const apiSecretToUse = ""; // Not needed with full API key
         
         const newCard = await CardUtils.purchaseVirtualCard(
-          amount, 
+          cardFormData.value, 
           'USDC', 
           apiKeyToUse, 
           apiSecretToUse, 
-          email, 
-          transactionPassword
+          cardFormData.email, 
+          transactionPassword,
+          cardFormData.firstName,
+          cardFormData.lastName,
+          cardFormData.mobile
         );
         
         setCard(newCard);
@@ -283,8 +279,8 @@ function App() {
           throw new Error('Card not found');
         }
         
-        const apiKeyToUse = "YsIy5RYLDGPhVz2xWBWUlv3wW1pNHnyhgKILG5kulPY=";
-        const apiSecretToUse = "gLjwb4+p4x941sCMzG6sU0GGyacy/upvfUDa6qqjswE=";
+        const apiKeyToUse = "LIVE_API_KEY:50415ff0f56236badcc426fac91d1ad6:71e1937ccddd75338068067c8fe73e42";
+        const apiSecretToUse = ""; // Not needed with full API key
         
         const updatedCard = await CardUtils.topUpCard(
           card.id,
@@ -350,14 +346,6 @@ function App() {
     }
   };
 
-  const loadCard = async () => {
-    setPendingTransaction({
-      to: "LOAD_CARD", 
-      value: "0"
-    });
-    setShowPasswordModal(true);
-  };
-
   // Add functions to handle the reveal requests
   const handleRevealSeedPhrase = () => {
     setPendingTransaction({
@@ -400,6 +388,74 @@ function App() {
   };
 
   const [showLogoutMenu, setShowLogoutMenu] = useState(false);
+
+  // Add this function after the existing functions (around line 400, after handleTopUpCard):
+  const handleCreateCard = async () => {
+    if (!cardFormData.firstName || !cardFormData.lastName || !cardFormData.email || !cardFormData.mobile || !cardFormData.password) {
+      showNotification('Please fill in all required fields', 'error');
+      return;
+    }
+
+    // Validate mobile number format
+    if (!cardFormData.mobile.startsWith('+')) {
+      showNotification('Mobile number must include country code (e.g., +1234567890)', 'error');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Try real API first, fall back to mock if it fails
+      try {
+        const apiKeyToUse = "LIVE_API_KEY:50415ff0f56236badcc426fac91d1ad6:71e1937ccddd75338068067c8fe73e42";
+        const apiSecretToUse = ""; // Not needed with full API key
+        
+        const newCard = await CardUtils.purchaseVirtualCard(
+          cardFormData.value,
+          'USDC',
+          apiKeyToUse,
+          apiSecretToUse,
+          cardFormData.email,
+          cardFormData.password,
+          cardFormData.firstName,
+          cardFormData.lastName,
+          cardFormData.mobile
+        );
+        
+        setCard(newCard);
+        showNotification('Card created successfully!', 'success');
+      } catch (apiError) {
+        console.log("API failed, creating mock card...");
+        
+        // Create mock card as fallback
+        const mockCard = await CardUtils.createMockCard(
+          cardFormData.value,
+          cardFormData.email,
+          cardFormData.password,
+          cardFormData.firstName,
+          cardFormData.lastName,
+          cardFormData.mobile
+        );
+        
+        setCard(mockCard);
+        showNotification('Demo card created successfully! (API unavailable)', 'success');
+      }
+      
+      // Reset form
+      setCardFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        mobile: '',
+        value: 15,
+        password: ''
+      });
+      
+    } catch (error) {
+      showNotification(`Operation failed: ${(error as Error).message}`, 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="App">
@@ -703,39 +759,60 @@ function App() {
                           <h3>Create Virtual Card</h3>
                         </div>
                         
-                        <div className="form-group">
-                          <label>Email</label>
+                        <div className="card-creation-form">
+                          <h3>Create Virtual Card</h3>
+                          
                           <input
-                            placeholder="Your email address"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="text-input"
+                            type="text"
+                            placeholder="First Name"
+                            value={cardFormData.firstName}
+                            onChange={(e) => setCardFormData({...cardFormData, firstName: e.target.value})}
+                            required
                           />
-                        </div>
-                        
-                        <div className="form-group">
-                          <label>Fund your Card</label>
+                          
+                          <input
+                            type="text"
+                            placeholder="Last Name"
+                            value={cardFormData.lastName}
+                            onChange={(e) => setCardFormData({...cardFormData, lastName: e.target.value})}
+                            required
+                          />
+                          
+                          <input
+                            type="email"
+                            placeholder="Email Address"
+                            value={cardFormData.email}
+                            onChange={(e) => setCardFormData({...cardFormData, email: e.target.value})}
+                            required
+                          />
+                          
+                          <input
+                            type="tel"
+                            placeholder="Mobile Number (e.g., +1234567890)"
+                            value={cardFormData.mobile}
+                            onChange={(e) => setCardFormData({...cardFormData, mobile: e.target.value})}
+                            required
+                          />
+                          
                           <input
                             type="number"
-                            placeholder="Amount in USD"
-                            value={amount}
-                            onChange={(e) => setAmount(Number(e.target.value))}
-                            className="text-input"
-                            min="10"
+                            placeholder="Card Value (USD)"
+                            value={cardFormData.value}
+                            onChange={(e) => setCardFormData({...cardFormData, value: parseInt(e.target.value)})}
+                            min="1"
+                            required
                           />
-                        </div>
-                        
-                        <button 
-                          className="primary-button"
-                          onClick={handlePurchaseCard}
-                        >
-                          Create & Fund Card
-                        </button>
-                        
-                        <div className="card-alternative">
-                          <span>Already have a card?</span>
-                          <button className="text-button" onClick={loadCard}>
-                            Load Existing Card
+                          
+                          <input
+                            type="password"
+                            placeholder="Wallet Password"
+                            value={cardFormData.password}
+                            onChange={(e) => setCardFormData({...cardFormData, password: e.target.value})}
+                            required
+                          />
+                          
+                          <button onClick={handleCreateCard} disabled={isLoading}>
+                            {isLoading ? 'Creating...' : 'Create Card'}
                           </button>
                         </div>
                       </div>

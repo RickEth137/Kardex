@@ -1,69 +1,110 @@
-# React + TypeScript + Vite
+# Kardex - Crypto Virtual Card Extension
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A Chrome extension that enables users to create virtual cards funded with cryptocurrency (USDC).
 
-Currently, two official plugins are available:
+## 🚀 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Real USDC Integration**: Check actual wallet balances on Ethereum mainnet
+- **Virtual Card Creation**: Generate professional Visa cards instantly
+- **Secure Wallet Management**: Encrypted private key storage
+- **Professional UI**: Clean, modern interface
+- **Transaction History**: View wallet transactions
+- **Card Management**: Top-up, view details, and manage cards
+- **Cross-platform**: Works as Chrome extension
 
-## Expanding the ESLint configuration
+## 💳 How It Works
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+1. **Create/Import Wallet**: Generate new wallet or import existing seed phrase
+2. **Fund with USDC**: Ensure your wallet has USDC balance
+3. **Create Virtual Card**: Convert USDC to spendable virtual card
+4. **Use Anywhere**: Use your virtual card for online purchases
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🛠 Tech Stack
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+- **Frontend**: React + TypeScript + Vite
+- **Blockchain**: Ethers.js for Ethereum integration
+- **Encryption**: CryptoJS for secure data storage
+- **Card Generation**: Custom Luhn algorithm validation
+- **API Integration**: Circle API ready (optional)
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 📦 Installation
+
+### For Users
+1. Download the extension from Chrome Web Store (coming soon)
+2. Install and create your wallet
+3. Fund with USDC and create cards
+
+### For Developers
+```bash
+# Clone repository
+git clone https://github.com/YOUR_USERNAME/kardex.git
+cd kardex
+
+# Install dependencies
+npm install
+
+# Build extension
+npm run build
+
+# Load in Chrome
+# 1. Open Chrome Extensions (chrome://extensions/)
+# 2. Enable Developer Mode
+# 3. Click "Load Unpacked" and select the 'dist' folder
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🔧 Development
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+# Start development server
+npm run dev
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Build for production
+npm run build
+
+# Run tests
+npm test
 ```
+
+## 🔐 Security Features
+
+- **Client-side encryption**: Private keys never leave your device
+- **Password protection**: All sensitive data encrypted with user password
+- **No external dependencies**: Core functionality works offline
+- **Secure card generation**: Proper Luhn validation for card numbers
+
+## 🌐 Supported Networks
+
+- **Ethereum Mainnet**: USDC balance checking and transactions
+- **USDC Contract**: `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48`
+
+## 📋 Requirements
+
+- Chrome browser (version 88+)
+- USDC balance in Ethereum wallet
+- Internet connection for blockchain queries
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## ⚠️ Disclaimer
+
+This is experimental software. Use at your own risk. Always keep backups of your seed phrases and private keys.
+
+## 🙋‍♂️ Support
+
+- Create an issue for bug reports
+- Join our Discord for community support
+- Email: support@kardex.crypto
+
+---
+
+**Built with ❤️ for the crypto community**

@@ -12,7 +12,13 @@
     }
   },
   "permissions": [
-    "storage"
+    "storage",
+    "https://www.sandbox.striga.com/*",
+    "https://striga.com/*"
+  ],
+  "host_permissions": [
+    "https://www.sandbox.striga.com/*",
+    "https://striga.com/*"
   ],
   "icons": {
     "16": "icons/icon16.png",
