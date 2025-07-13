@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { WalletUtils } from './utils/walletUtils';
 import { CardUtils } from './utils/cardUtils';
 import { PriceUtils } from './utils/priceUtils';
-import CreditCard from 'react-credit-cards-2';
 import { QRCodeCanvas } from 'qrcode.react';
 import './App.css';
 import './credit-card-styles.css';
 
 function App() {
+
+  
   // Animation state
   const [showIntro, setShowIntro] = useState(true);
   
@@ -70,6 +71,7 @@ function App() {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [showFullCardNumber, setShowFullCardNumber] = useState(false);
 
   // Check if user already has a wallet and handle intro animation
   useEffect(() => {
@@ -725,95 +727,147 @@ function App() {
                 {activeTab === 'card' && (
                   <>
                     {card ? (
-                      <div className="card-display">
-                        <CreditCard
-                          number={card.number || "•••• •••• •••• ••••"}
-                          name={card.name || "KARDEX USER"}
-                          expiry={card.expiry || "••/••"}
-                          cvc={card.cvc || "•••"}
-                          focused="number"
-                        />
-                        
-                        <div className="card-info">
-                          <div className="card-details">
-                            <div className="card-detail">
-                              <span>Status:</span> Active
+                      <div className="card-section">
+                        <div className="virtual-card">
+                          <div className="card-header">
+                            <div className="card-logo">
+                              <span className="card-network">{card.network || 'Visa'}</span>
                             </div>
-                            <div className="card-detail">
-                              <span>Balance:</span> {card.balance} USDC ({PriceUtils.formatUSD(card.balance * usdcPrice)})
+                            <div className="card-balance">
+                              <span className="balance-amount">{card.balance}</span>
                             </div>
                           </div>
                           
-                          {/* Add Top Up button */}
+                          <div 
+                            className="card-number" 
+                            onClick={() => setShowFullCardNumber(!showFullCardNumber)}
+                          >
+                            {showFullCardNumber 
+                              ? `${card.number.slice(0, 4)} ${card.number.slice(4, 8)} ${card.number.slice(8, 12)} ${card.number.slice(12)}`
+                              : `${card.number.slice(0, 4)} ${card.number.slice(4, 8)} ${card.number.slice(8, 12)} •••`
+                            }
+                            <button 
+                              className="reveal-btn" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowFullCardNumber(!showFullCardNumber);
+                              }}
+                            >
+                              {showFullCardNumber ? '👁️‍🗨️' : '👁️'}
+                            </button>
+                          </div>
+                          
+                          <div className="card-details">
+                            <div className="card-holder">
+                              <div className="card-label">Card Holder</div>
+                              <div className="card-name">{card.name}</div>
+                            </div>
+                            <div className="card-expiry">
+                              <div className="card-label">Valid Thru</div>
+                              <div className="card-date">{card.expiry}</div>
+                            </div>
+                            <div className="card-cvc">
+                              <div className="card-label">CVC</div>
+                              <div className="card-code">{showFullCardNumber ? card.cvc : '•••'}</div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="card-info">
+                          <div className="card-status">
+                            <span className="status-label">Status:</span>
+                            <span className={`status-value ${card.status}`}>{card.status}</span>
+                          </div>
+                          <div className="card-balance-info">
+                            <span className="balance-label">Balance:</span>
+                            <span className="balance-value">{card.balance} USDC (${card.balance}.00)</span>
+                          </div>
+                        </div>
+                        
+                        <div className="card-actions">
                           <button 
-                            className="primary-button top-up-button"
+                            className="btn btn-primary"
                             onClick={() => setShowTopUpModal(true)}
                           >
                             Top Up Card
                           </button>
+                          
+                          <button 
+                            className="btn btn-secondary"
+                            onClick={() => setShowFullCardNumber(!showFullCardNumber)}
+                          >
+                            {showFullCardNumber ? 'Hide Details' : 'Show Full Number'}
+                          </button>
                         </div>
                       </div>
                     ) : (
-                      <div className="card-creation">
-                        <div className="section-header">
-                          <h3>Create Virtual Card</h3>
-                        </div>
-                        
-                        <div className="card-creation-form">
-                          <h3>Create Virtual Card</h3>
+                      <div className="no-card-section">
+                        <div className="no-card-message">
+                          <h3>No Virtual Card</h3>
+                          <p>Create your first crypto-funded virtual card</p>
                           
-                          <input
-                            type="text"
-                            placeholder="First Name"
-                            value={cardFormData.firstName}
-                            onChange={(e) => setCardFormData({...cardFormData, firstName: e.target.value})}
-                            required
-                          />
-                          
-                          <input
-                            type="text"
-                            placeholder="Last Name"
-                            value={cardFormData.lastName}
-                            onChange={(e) => setCardFormData({...cardFormData, lastName: e.target.value})}
-                            required
-                          />
-                          
-                          <input
-                            type="email"
-                            placeholder="Email Address"
-                            value={cardFormData.email}
-                            onChange={(e) => setCardFormData({...cardFormData, email: e.target.value})}
-                            required
-                          />
-                          
-                          <input
-                            type="tel"
-                            placeholder="Mobile Number (e.g., +1234567890)"
-                            value={cardFormData.mobile}
-                            onChange={(e) => setCardFormData({...cardFormData, mobile: e.target.value})}
-                            required
-                          />
-                          
-                          <input
-                            type="number"
-                            placeholder="Card Value (USD)"
-                            value={cardFormData.value}
-                            onChange={(e) => setCardFormData({...cardFormData, value: parseInt(e.target.value)})}
-                            min="1"
-                            required
-                          />
-                          
-                          <input
-                            type="password"
-                            placeholder="Wallet Password"
-                            value={cardFormData.password}
-                            onChange={(e) => setCardFormData({...cardFormData, password: e.target.value})}
-                            required
-                          />
-                          
-                          <button onClick={handleCreateCard} disabled={isLoading}>
-                            {isLoading ? 'Creating...' : 'Create Card'}
-                          </button>
+                          <div className="card-form">
+                            <div className="form-row">
+                              <input
+                                type="text"
+                                placeholder="First Name"
+                                value={cardFormData.firstName}
+                                onChange={(e) => setCardFormData({...cardFormData, firstName: e.target.value})}
+                                className="form-input"
+                              />
+                              <input
+                                type="text"
+                                placeholder="Last Name"
+                                value={cardFormData.lastName}
+                                onChange={(e) => setCardFormData({...cardFormData, lastName: e.target.value})}
+                                className="form-input"
+                              />
+                            </div>
+                            
+                            <input
+                              type="email"
+                              placeholder="Email Address"
+                              value={cardFormData.email}
+                              onChange={(e) => setCardFormData({...cardFormData, email: e.target.value})}
+                              className="form-input"
+                            />
+                            
+                            <input
+                              type="tel"
+                              placeholder="Mobile (+1234567890)"
+                              value={cardFormData.mobile}
+                              onChange={(e) => setCardFormData({...cardFormData, mobile: e.target.value})}
+                              className="form-input"
+                            />
+                            
+                            <div className="amount-section">
+                              <label>Card Value (USD)</label>
+                              <input
+                                type="number"
+                                value={cardFormData.value}
+                                onChange={(e) => setCardFormData({...cardFormData, value: Number(e.target.value)})}
+                                className="form-input"
+                                min="10"
+                                max="500"
+                              />
+                            </div>
+                            
+                            <input
+                              type="password"
+                              placeholder="Wallet Password"
+                              value={cardFormData.password}
+                              onChange={(e) => setCardFormData({...cardFormData, password: e.target.value})}
+                              className="form-input"
+                            />
+                            
+                            <button 
+                              className="create-card-btn"
+                              onClick={handleCreateCard}
+                              disabled={isLoading}
+                            >
+                              {isLoading ? 'Creating Card...' : 'Create Virtual Card'}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -1170,214 +1224,3 @@ function App() {
 }
 
 export default App;
-
-<style>{`
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.9);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-  }
-  
-  .modal-container {
-    background-color: #1e1e1e;
-    width: 100%;
-    max-width: 340px;
-    border-radius: 18px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 18px;
-    border-bottom: 1px solid #333;
-    width: 100%;
-  }
-  
-  .modal-header h2 {
-    margin: 0;
-    color: white;
-    font-size: 20px;
-    font-weight: 600;
-  }
-  
-  .close-button {
-    background: none;
-    border: none;
-    color: #999;
-    font-size: 24px;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
-    height: 24px;
-    width: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .close-button:hover {
-    color: #fff;
-  }
-  
-  .modal-content {
-    padding: 18px 14px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-  }
-  
-  .qr-container {
-    background-color: white;
-    padding: 12px;
-    border-radius: 14px;
-    margin-bottom: 16px;
-  }
-  
-  .address-container {
-    background-color: #2a2a2a;
-    padding: 12px;
-    border-radius: 10px;
-    width: 100%;
-    margin-bottom: 16px;
-    text-align: center;
-  }
-  
-  .address-value {
-    color: white;
-    font-family: monospace;
-    font-size: 12px;
-    word-break: break-all;
-    text-align: center;
-    width: 100%;
-    display: block;
-  }
-  
-  /* The copy button container */
-  .copy-btn-container {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    margin: 16px 0;
-  }
-  
-  /* The copy button itself */
-  .copy-button {
-    background-color: #8247e5;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 24px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    width: auto;
-  }
-  
-  /* The warning message container */
-  .warning-message {
-    width: 100%;
-    text-align: center;
-    padding: 0 10px;
-    margin-top: 16px;
-  }
-  
-  /* The warning message text */
-  .warning-message p {
-    color: #bbb;
-    font-size: 13px;
-    line-height: 1.4;
-    margin: 0;
-    text-align: center;
-  }
-  
-  /* Make the K logo clickable */
-  .logo {
-    cursor: pointer;
-    position: relative;
-  }
-  
-  /* K logo hover effect */
-  .logo:hover .k-logo {
-    opacity: 0.8;
-  }
-  
-  /* Logout menu styling */
-  .logout-menu {
-    position: absolute;
-    top: 70px;
-    left: 20px;
-    background-color: #1e1e1e;
-    border-radius: 10px;
-    width: 220px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    z-index: 100;
-    overflow: hidden;
-  }
-  
-  .logout-menu-content {
-    padding: 0;
-  }
-  
-  .logout-menu-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 15px;
-    border-bottom: 1px solid #333;
-  }
-  
-  .logout-menu-header h3 {
-    margin: 0;
-    color: white;
-    font-size: 16px;
-    font-weight: 500;
-  }
-  
-  .logout-menu-body {
-    padding: 15px;
-  }
-  
-  .logout-button {
-    background-color: #ff4d4f;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 0;
-    width: 100%;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .logout-button:hover {
-    background-color: #ff7875;
-  }
-  
-  /* Close button styling */
-  .close-button {
-    background: none;
-    border: none;
-    color: #999;
-    font-size: 20px;
-    cursor: pointer;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 20px;
-    width: 20px;
-  }
-`}</style>

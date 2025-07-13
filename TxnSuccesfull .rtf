@@ -1,0 +1,302 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2757
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 <!DOCTYPE html>\
+<html lang="es">\
+<head>\
+    <meta charset="UTF-8">\
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">\
+    <title>Cargador de Transacci\'f3n con Mensaje de \'c9xito</title>\
+    <style>\
+        /* CSS inyectado directamente para una vista previa f\'e1cil */\
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap');\
+\
+        body \{\
+            background-color: #121212;\
+            color: #E0E0E0;\
+            font-family: 'Roboto Mono', monospace;\
+            display: flex;\
+            justify-content: center;\
+            align-items: center;\
+            height: 100vh;\
+            margin: 0;\
+            padding: 1rem;\
+            box-sizing: border-box;\
+        \}\
+\
+        .loader-container \{\
+            background-color: #1E1E1E;\
+            border: 1px solid #333;\
+            border-radius: 8px;\
+            padding: 16px;\
+            width: 100%;\
+            max-width: 600px;\
+            transition: height 0.3s ease-in-out;\
+        \}\
+\
+        .header \{\
+            display: flex;\
+            justify-content: space-between;\
+            align-items: center;\
+            font-size: 0.9em;\
+            font-weight: 500;\
+            margin-bottom: 16px;\
+            flex-wrap: wrap;\
+        \}\
+        \
+        .header .title \{\
+            margin-right: 1rem;\
+        \}\
+\
+        .status-wrapper \{\
+            display: flex;\
+            align-items: center;\
+        \}\
+\
+        .status-dot \{\
+            width: 8px;\
+            height: 8px;\
+            background-color: #2ECC71; /* Verde */\
+            border-radius: 50%;\
+            margin-right: 8px;\
+            animation: pulse 1.5s infinite;\
+        \}\
+\
+        .status-dot.completed \{\
+            background-color: #3498DB; /* Azul para completado */\
+            animation: none; /* Detiene la animaci\'f3n de pulso */\
+        \}\
+\
+        @keyframes pulse \{\
+            0% \{ box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); \}\
+            70% \{ box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); \}\
+            100% \{ box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); \}\
+        \}\
+\
+        .status-text \{\
+            color: #2ECC71; /* Verde */\
+            margin-right: 16px;\
+            transition: color 0.3s ease;\
+        \}\
+\
+        .status-text.completed \{\
+            color: #3498DB; /* Azul para completado */\
+        \}\
+\
+        .timer \{\
+            color: #9E9E9E; /* Gris */\
+        \}\
+\
+        .agent \{\
+            display: flex;\
+            align-items: center;\
+            margin-bottom: 8px;\
+            font-size: 0.9em;\
+            transition: opacity 0.3s ease, transform 0.3s ease;\
+        \}\
+\
+        .agent-label \{\
+            min-width: 140px;\
+            color: #BDBDBD;\
+        \}\
+\
+        .progress-bar \{\
+            display: flex;\
+            flex-grow: 1;\
+            overflow: hidden;\
+        \}\
+\
+        .progress-fill \{\
+            color: #E67E22; /* Naranja */\
+            white-space: pre;\
+        \}\
+\
+        .progress-track \{\
+            color: #424242; /* Gris oscuro para el fondo de la barra */\
+            white-space: pre;\
+        \}\
+        \
+        /* Estilo para el mensaje de \'e9xito */\
+        #success-message \{\
+            display: none; /* Oculto por defecto */\
+            background-color: #272727;\
+            border: 1px solid #444;\
+            border-radius: 4px;\
+            padding: 12px;\
+            text-align: center;\
+            color: #2ECC71; /* Verde \'e9xito */\
+            font-weight: 500;\
+            animation: fadeIn 0.5s ease-in-out;\
+        \}\
+\
+        @keyframes fadeIn \{\
+            from \{ opacity: 0; transform: translateY(10px); \}\
+            to \{ opacity: 1; transform: translateY(0); \}\
+        \}\
+\
+    </style>\
+</head>\
+<body>\
+\
+    <div class="loader-container">\
+        <div class="header">\
+            <span class="title">KARDEX</span>\
+            <div class="status-wrapper">\
+                <span class="status-dot" id="status-dot"></span>\
+                <span class="status-text" id="status-text">IN PROGRESS</span>\
+                <span class="timer" id="timer">0M 0S</span>\
+            </div>\
+        </div>\
+        <div class="agents-wrapper" id="agents-wrapper">\
+            <!-- Los agentes se generar\'e1n con JavaScript -->\
+        </div>\
+        <!-- Contenedor del mensaje de \'e9xito -->\
+        <div id="success-message">\
+            TXN SUCCESSFUL\
+        </div>\
+    </div>\
+\
+    <script>\
+        document.addEventListener('DOMContentLoaded', () => \{\
+            // --- Configuraci\'f3n ---\
+            const config = \{\
+                numAgents: 1,\
+                progressChar: '\uc0\u10495 ',\
+                trackChar: '.',\
+                updateInterval: 100,\
+            \};\
+\
+            // --- Elementos del DOM ---\
+            const timerElement = document.getElementById('timer');\
+            const agentsWrapper = document.getElementById('agents-wrapper');\
+            const successMessageElement = document.getElementById('success-message');\
+            const statusDotElement = document.getElementById('status-dot');\
+            const statusTextElement = document.getElementById('status-text');\
+\
+            // --- Estado de la Animaci\'f3n ---\
+            let startTime = Date.now();\
+            let agentsProgress = Array(config.numAgents).fill(0);\
+            let progressIntervals = [];\
+            let timerInterval;\
+            const labelWidth = 140;\
+\
+            // --- Funciones ---\
+\
+            function startTimer() \{\
+                timerInterval = setInterval(() => \{\
+                    const elapsedTime = Date.now() - startTime;\
+                    const minutes = Math.floor(elapsedTime / 60000);\
+                    const seconds = Math.floor((elapsedTime % 60000) / 1000);\
+                    timerElement.textContent = `$\{minutes\}M $\{seconds\}S`;\
+                \}, 1000);\
+            \}\
+\
+            function createAgents() \{\
+                for (let i = 0; i < config.numAgents; i++) \{\
+                    const agentDiv = document.createElement('div');\
+                    agentDiv.className = 'agent';\
+                    agentDiv.id = `agent-$\{i\}`;\
+                    agentDiv.style.opacity = '1';\
+                    agentDiv.style.transform = 'scaleY(1)';\
+\
+                    const label = document.createElement('span');\
+                    label.className = 'agent-label';\
+                    label.textContent = `FINALIZING TXN`;\
+\
+                    const progressBar = document.createElement('div');\
+                    progressBar.className = 'progress-bar';\
+\
+                    const fill = document.createElement('span');\
+                    fill.className = 'progress-fill';\
+                    fill.id = `fill-$\{i\}`;\
+\
+                    const track = document.createElement('span');\
+                    track.className = 'progress-track';\
+                    track.id = `track-$\{i\}`;\
+                    \
+                    progressBar.appendChild(fill);\
+                    progressBar.appendChild(track);\
+                    agentDiv.appendChild(label);\
+                    agentDiv.appendChild(progressBar);\
+                    agentsWrapper.appendChild(agentDiv);\
+                \}\
+                updateAllProgressBars();\
+            \}\
+            \
+            function updateAllProgressBars() \{\
+                const containerWidth = agentsWrapper.clientWidth - labelWidth; \
+                const charWidth = 8; \
+                config.totalSteps = Math.floor(containerWidth / charWidth);\
+                for (let i = 0; i < config.numAgents; i++) \{\
+                    updateProgressBar(i);\
+                \}\
+            \}\
+\
+            function updateProgressBar(agentIndex) \{\
+                const fillElement = document.getElementById(`fill-$\{agentIndex\}`);\
+                const trackElement = document.getElementById(`track-$\{agentIndex\}`);\
+                const currentProgress = agentsProgress[agentIndex];\
+                fillElement.textContent = config.progressChar.repeat(currentProgress);\
+                trackElement.textContent = config.trackChar.repeat(Math.max(0, config.totalSteps - currentProgress));\
+            \}\
+            \
+            function completeTransaction() \{\
+                // Detener todas las animaciones\
+                clearInterval(timerInterval);\
+                progressIntervals.forEach(clearInterval);\
+\
+                // Ocultar la barra de progreso con una animaci\'f3n\
+                const agentElement = document.getElementById('agent-0');\
+                if (agentElement) \{\
+                    agentElement.style.opacity = '0';\
+                    agentElement.style.transform = 'scaleY(0)';\
+                \}\
+                \
+                // Actualizar el estado a "Completado"\
+                statusTextElement.textContent = 'COMPLETED';\
+                statusTextElement.classList.add('completed');\
+                statusDotElement.classList.add('completed');\
+\
+                // Mostrar el mensaje de \'e9xito despu\'e9s de que la barra se oculte\
+                setTimeout(() => \{\
+                    successMessageElement.style.display = 'block';\
+                \}, 300); // Coincide con la duraci\'f3n de la transici\'f3n de la barra\
+            \}\
+\
+            function startProgressSimulation() \{\
+                for (let i = 0; i < config.numAgents; i++) \{\
+                    const interval = setInterval(() => \{\
+                        const randomIncrement = Math.random() > 0.4 ? 1 : 0;\
+                        \
+                        if (agentsProgress[i] < config.totalSteps) \{\
+                            agentsProgress[i] += randomIncrement;\
+                            updateProgressBar(i);\
+                        \} else \{\
+                            // Una vez que la barra se llena, se completa la transacci\'f3n\
+                            agentsProgress[i] = config.totalSteps;\
+                            updateProgressBar(i);\
+                            completeTransaction();\
+                        \}\
+                    \}, config.updateInterval + (Math.random() * 50)); \
+                    \
+                    progressIntervals.push(interval);\
+                \}\
+            \}\
+            \
+            function main() \{\
+                createAgents();\
+                startTimer();\
+                startProgressSimulation();\
+                window.addEventListener('resize', updateAllProgressBars); \
+            \}\
+\
+            main();\
+        \});\
+    </script>\
+</body>\
+</html>\
+}
